@@ -24,12 +24,15 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.InputSource;
-
-import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.Image;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import org.apache.commons.codec.binary.Base64;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
  /*
  * @author Milos Jelic
@@ -42,7 +45,8 @@ public class HttpGetIzlazni {
     private static Integer prikazStorno;
     private static String stornoKomentar;
     private static String statusDokumenta;
-    private static String uspesnoSkidanje;
+    private static String uspesnoSkidanjePdf;
+    private static String uspesnoSkidanjeXML;
     private static final String apiUrlSviIzlazniIds = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ids";
     private static final String apiUrlSviIzlazni = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice?invoiceId=";
     private static final String apiUrlIzlazniXMLUBL = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/xml?invoiceId=";
@@ -53,7 +57,7 @@ public class HttpGetIzlazni {
      * @param args the command line arguments
      */
      
-    public static void main(String[] args) throws IOException, JSONException, ParserConfigurationException, SAXException {
+    public static void main(String[] args) throws IOException, JSONException, ParserConfigurationException, SAXException, TransformerException {
         // Preuzimanje svih Izlaznih ID-a
         Request requestSviIds = Request.Post(apiUrlSviIzlazniIds);
         requestSviIds.setHeader("Accept", "text/plain");
@@ -127,7 +131,7 @@ public class HttpGetIzlazni {
              DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
              InputSource src = new InputSource();
              src.setCharacterStream(new StringReader(htmlIzlazni2));
-
+             
              Document doc = builder.parse(src);
            
              doc.getDocumentElement().normalize();
@@ -164,6 +168,8 @@ public class HttpGetIzlazni {
              String valuta  = doc.getElementsByTagName("cbc:DocumentCurrencyCode").item(0).getTextContent();
              //skidanje pdf-a sa sefa
              skiniPdf(doc,brojdok);
+             //skidanje XML fajla sa sefa
+             skiniXML(htmlIzlazni2, brojdok);
 
              
               //ispisivanje
@@ -176,7 +182,8 @@ public class HttpGetIzlazni {
              }
              System.out.println("Komentar statusa : " + komentarStatusa);
              System.out.println("InvoiceID : " + salesId);
-             System.out.println("PDF Dokument : " + uspesnoSkidanje);
+             System.out.println("PDF Dokument : " + uspesnoSkidanjePdf);
+             System.out.println("XML Dokument : " + uspesnoSkidanjeXML);
              System.out.println("=========================================================");
          
          
@@ -188,27 +195,45 @@ public class HttpGetIzlazni {
     }
  
 }
+    public static String skiniXML(String xmlSource, String brojdok) 
+    throws SAXException, ParserConfigurationException, IOException, TransformerConfigurationException, TransformerException {
+    // Parse the given input
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document doc = builder.parse(new InputSource(new StringReader(xmlSource)));
+
+    // Write the parsed document to an xml file
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    Transformer transformer = transformerFactory.newTransformer();
+    DOMSource source = new DOMSource(doc);
+
+    StreamResult result;
+    String dirXML = "e:/efakture/xml/";
+    result = new StreamResult(new File(dirXML + "eFaktureXML_"+brojdok+".xml"));
+    transformer.transform(source, result);
+    uspesnoSkidanjeXML = "Uspesno ste skinuli XML dokument na lokaciju e:/efakture/xml/eFaktureXML_"+brojdok+".xml"; 
+    return uspesnoSkidanjeXML;
+}
+    
      private static String skiniPdf(Document doc, String brojdok) throws FileNotFoundException, IOException{
-        NodeList nList2 = doc.getElementsByTagName("env:DocumentHeader");
-              for (int k = 0; k < nList2.getLength(); k++) {
-              Node nNode2 = nList2.item(k);
+        NodeList nListParentTag = doc.getElementsByTagName("env:DocumentHeader");
+              for (int k = 0; k < nListParentTag.getLength(); k++) {
+              Node nNode2 = nListParentTag.item(k);
             if (nNode2.getNodeType() == Node.ELEMENT_NODE) {
                 Element elem = (Element) nNode2;
-                Node nodePdf = elem.getElementsByTagName("env:DocumentPdf").item(0);
-                String pdf = nodePdf.getTextContent();
+                Node nodePdfElement = elem.getElementsByTagName("env:DocumentPdf").item(0);
+                String pdf = nodePdfElement.getTextContent();
                 byte[] decoded = java.util.Base64.getDecoder().decode(pdf);
                 //definisati gde ce se fakture smestati! PDF je cca 65KB
-                  try (FileOutputStream fosPdf = new FileOutputStream("e:/efakture/eFakturePDF_"+brojdok+".pdf")) {
+                String dir = "e:/efakture/pdf/";
+                  try (FileOutputStream fosPdf = new FileOutputStream(dir + "eFakturePDF_"+brojdok+".pdf")) {
                       fosPdf.write(decoded);
                       fosPdf.flush();
-                       uspesnoSkidanje = "Uspesno ste skinuli pdf dokumenta "+brojdok;
-                              
+                       uspesnoSkidanjePdf = "Uspesno ste skinuli PDF dokument na lokaciju e:/efakture/pdf/eFakturePDF_"+brojdok+".pdf";  
                   }
             }
-
         }
-
-         return uspesnoSkidanje;
+         return uspesnoSkidanjePdf;
      
      }
      private static String getStatusSrb(String str) {
