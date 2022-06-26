@@ -27,6 +27,7 @@ import org.xml.sax.InputSource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import javax.swing.JOptionPane;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -47,6 +48,8 @@ public class HttpGetIzlazni {
     private static String statusDokumenta;
     private static String uspesnoSkidanjePdf;
     private static String uspesnoSkidanjeXML;
+    private static int inputPDF;
+    private static int inputXML;
     private static final String apiUrlSviIzlazniIds = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ids";
     private static final String apiUrlSviIzlazni = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice?invoiceId=";
     private static final String apiUrlIzlazniXMLUBL = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/xml?invoiceId=";
@@ -166,10 +169,22 @@ public class HttpGetIzlazni {
              String iznos = doc.getElementsByTagName("cbc:PayableAmount").item(0).getTextContent();
              String brojdok = doc.getElementsByTagName("cbc:ID").item(0).getTextContent();
              String valuta  = doc.getElementsByTagName("cbc:DocumentCurrencyCode").item(0).getTextContent();
+             
+             inputPDF = JOptionPane.showConfirmDialog(null, 
+                "Da li želite da skinete PDF fajl fakture? "+brojdok, "PDF faktura",JOptionPane.YES_NO_OPTION);
+
+            // 0=yes, 1=no, 2=cancel
+            if(inputPDF == 0){
+                skiniPdf(doc,brojdok);
+            }
+             inputXML = JOptionPane.showConfirmDialog(null, 
+                "Da li želite da skinete XML fajl fakture? "+brojdok, "XML faktura",JOptionPane.YES_NO_OPTION);
              //skidanje pdf-a sa sefa
-             skiniPdf(doc,brojdok);
+              if(inputXML == 0){
+                 skiniXML(htmlIzlazni2, brojdok);
+            }
              //skidanje XML fajla sa sefa
-             skiniXML(htmlIzlazni2, brojdok);
+           
 
              
               //ispisivanje
@@ -182,8 +197,13 @@ public class HttpGetIzlazni {
              }
              System.out.println("Komentar statusa : " + komentarStatusa);
              System.out.println("InvoiceID : " + salesId);
-             System.out.println("PDF Dokument : " + uspesnoSkidanjePdf);
+             if(inputPDF == 0){
+               System.out.println("PDF Dokument : " + uspesnoSkidanjePdf);
+             }
+             if(inputXML == 0){
              System.out.println("XML Dokument : " + uspesnoSkidanjeXML);
+             }
+    
              System.out.println("=========================================================");
          
          
