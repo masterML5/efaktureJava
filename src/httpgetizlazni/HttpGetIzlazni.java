@@ -47,6 +47,8 @@ public class HttpGetIzlazni {
 
     private static String izlazniXML;
     private static String salesId;
+    private static String pib;
+    private static String kupacIme;
     private static String komentarStatusa;
     private static Integer prikazStorno;
     private static String stornoKomentar;
@@ -166,16 +168,14 @@ public class HttpGetIzlazni {
                 Element elem = (Element) nNode;
 
                 Node nodelId = elem.getElementsByTagName("cbc:EndpointID").item(0);
-                String pib = nodelId.getTextContent();
+                 pib = nodelId.getTextContent();
 
                 Node node1 = elem.getElementsByTagName("cbc:Name").item(0);
-                String kupacIme = node1.getTextContent();
+                 kupacIme = node1.getTextContent();
                 
                 
                 //ispisivanje
-                System.out.println("Pib kupca : " + pib);
-                System.out.println("Kupac : " + kupacIme);
-                
+        
                 
 
             }
@@ -188,26 +188,13 @@ public class HttpGetIzlazni {
              UIManager.put("OptionPane.okButtonText", "Ok");
              UIManager.put("OptionPane.yesButtonText", "Da");
               
-              //skidanje PDF fajla sa sefa
-             inputPDF = JOptionPane.showConfirmDialog(null, 
-                "Da li želite da skinete PDF fajl fakture "+brojdok+ " ?", "PDF faktura preuzimanje",JOptionPane.YES_NO_OPTION);
-            // 0=yes, 1=no, 2=cancel
-            if(inputPDF == 0){
-                skiniPdf(doc,brojdok);
-            }
-               //skidanje XML fajla sa sefa
-             inputXML = JOptionPane.showConfirmDialog(null, 
-                "Da li želite da skinete XML fajl fakture "+brojdok+ " ?", "XML faktura preuzimanje",JOptionPane.YES_NO_OPTION);
-             // 0=yes, 1=no, 2=cancel
-              if(inputXML == 0){
-                 skiniXML(izlazniXML, brojdok);
-            }
-          
+
            
 
              
               //ispisivanje
-             
+             System.out.println("Pib kupca : " + pib);
+             System.out.println("Kupac : " + kupacIme);   
              System.out.println("Iznos : " + iznos + " " + valuta);
              System.out.println("Broj dokumenta : " + brojdok);
              System.out.println("Status : " + getStatusSrb(statusDokumenta));
@@ -217,12 +204,28 @@ public class HttpGetIzlazni {
              System.out.println("Datum promene statusa : " + promenaStatusaDatum + " Vreme : " + promenaStatusaDatumVreme);
              System.out.println("Komentar statusa : " + komentarStatusa);
              System.out.println("InvoiceID : " + salesId);
-             if(inputPDF == 0){
-               System.out.println("PDF Dokument : " + uspesnoSkidanjePdf);
-             }
-             if(inputXML == 0){
-             System.out.println("XML Dokument : " + uspesnoSkidanjeXML);
-             }
+             
+             
+             
+          
+             //skidanje PDF fajla sa sefa
+             inputPDF = JOptionPane.showConfirmDialog(null, 
+                "Da li želite da skinete PDF fajl fakture "+brojdok+ " ?", "PDF faktura preuzimanje",JOptionPane.YES_NO_OPTION);
+            // 0=yes, 1=no, 2=cancel
+            if(inputPDF == 0){
+                skiniPdf(doc,brojdok);
+                System.out.println("PDF Dokument : " + uspesnoSkidanjePdf);
+            }
+               //skidanje XML fajla sa sefa
+             inputXML = JOptionPane.showConfirmDialog(null, 
+                "Da li želite da skinete XML fajl fakture "+brojdok+ " ?", "XML faktura preuzimanje",JOptionPane.YES_NO_OPTION);
+             // 0=yes, 1=no, 2=cancel
+              if(inputXML == 0){
+                 skiniXML(izlazniXML, brojdok);
+                 System.out.println("XML Dokument : " + uspesnoSkidanjeXML);
+            }
+          
+         
     
              System.out.println("=========================================================");
          
@@ -251,7 +254,7 @@ public class HttpGetIzlazni {
     String dirXML = "e:/efakture/xml/";
     result = new StreamResult(new File(dirXML + "eFaktureXML_"+brojdok+".xml"));
     transformer.transform(source, result);
-    uspesnoSkidanjeXML = "Uspesno ste skinuli XML dokument na lokaciju e:/efakture/xml/eFaktureXML_"+brojdok+".xml"; 
+    uspesnoSkidanjeXML = "Uspesno ste skinuli XML dokument na lokaciju "+ dirXML + "eFaktureXML_"+brojdok+".xml"; 
     return uspesnoSkidanjeXML;
 }
     
@@ -269,7 +272,7 @@ public class HttpGetIzlazni {
                   try (FileOutputStream fosPdf = new FileOutputStream(dirPDF + "eFakturePDF_"+brojdok+".pdf")) {
                       fosPdf.write(decoded);
                       fosPdf.flush();
-                       uspesnoSkidanjePdf = "Uspesno ste skinuli PDF dokument na lokaciju e:/efakture/pdf/eFakturePDF_"+brojdok+".pdf";  
+                       uspesnoSkidanjePdf = "Uspesno ste skinuli PDF dokument na lokaciju " + dirPDF + "eFakturePDF_"+brojdok+".pdf";  
                   }
             }
         }
