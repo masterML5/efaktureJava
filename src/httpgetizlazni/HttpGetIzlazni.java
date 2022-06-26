@@ -175,7 +175,7 @@ public class HttpGetIzlazni {
                 //ispisivanje
                 System.out.println("Pib kupca : " + pib);
                 System.out.println("Kupac : " + kupacIme);
-                System.out.println("Datum promene statusa : " + promenaStatusaDatum + " Vreme : " + promenaStatusaDatumVreme);
+                
                 
 
             }
@@ -214,6 +214,7 @@ public class HttpGetIzlazni {
              if(prikazStorno == 1){
              System.out.println("Storno komentar :" + stornoKomentar);  
              }
+             System.out.println("Datum promene statusa : " + promenaStatusaDatum + " Vreme : " + promenaStatusaDatumVreme);
              System.out.println("Komentar statusa : " + komentarStatusa);
              System.out.println("InvoiceID : " + salesId);
              if(inputPDF == 0){
