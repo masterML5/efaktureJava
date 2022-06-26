@@ -25,6 +25,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.InputSource;
 
+import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.Image;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import org.apache.commons.codec.binary.Base64;
+
  /*
  * @author Milos Jelic
  */
@@ -36,6 +42,7 @@ public class HttpGetIzlazni {
     private static Integer prikazStorno;
     private static String stornoKomentar;
     private static String statusDokumenta;
+    private static String uspesnoSkidanje;
     private static final String apiUrlSviIzlazniIds = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ids";
     private static final String apiUrlSviIzlazni = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice?invoiceId=";
     private static final String apiUrlIzlazniXMLUBL = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/xml?invoiceId=";
@@ -122,8 +129,12 @@ public class HttpGetIzlazni {
              src.setCharacterStream(new StringReader(htmlIzlazni2));
 
              Document doc = builder.parse(src);
+           
              doc.getDocumentElement().normalize();
              NodeList nList = doc.getElementsByTagName("cac:AccountingCustomerParty");
+             
+            
+             
              for (int j = 0; j < nList.getLength(); j++) {
 
               Node nNode = nList.item(j);
@@ -138,18 +149,22 @@ public class HttpGetIzlazni {
 
                 Node node1 = elem.getElementsByTagName("cbc:Name").item(0);
                 String fname = node1.getTextContent();
+                
+                
                 //ispisivanje
                 System.out.printf("Pib kupca : %s%n", uid);
                 System.out.printf("Kupac : %s%n", fname);
+                
 
             }
 
         }
-  
-           
              String iznos = doc.getElementsByTagName("cbc:PayableAmount").item(0).getTextContent();
              String brojdok = doc.getElementsByTagName("cbc:ID").item(0).getTextContent();
              String valuta  = doc.getElementsByTagName("cbc:DocumentCurrencyCode").item(0).getTextContent();
+             //skidanje pdf-a sa sefa
+             skiniPdf(doc,brojdok);
+
              
               //ispisivanje
              
@@ -161,6 +176,7 @@ public class HttpGetIzlazni {
              }
              System.out.println("Komentar statusa : " + komentarStatusa);
              System.out.println("InvoiceID : " + salesId);
+             System.out.println("PDF Dokument : " + uspesnoSkidanje);
              System.out.println("=========================================================");
          
          
@@ -172,7 +188,30 @@ public class HttpGetIzlazni {
     }
  
 }
-     private static String  getStatusSrb(String str) {
+     private static String skiniPdf(Document doc, String brojdok) throws FileNotFoundException, IOException{
+        NodeList nList2 = doc.getElementsByTagName("env:DocumentHeader");
+              for (int k = 0; k < nList2.getLength(); k++) {
+              Node nNode2 = nList2.item(k);
+            if (nNode2.getNodeType() == Node.ELEMENT_NODE) {
+                Element elem = (Element) nNode2;
+                Node nodePdf = elem.getElementsByTagName("env:DocumentPdf").item(0);
+                String pdf = nodePdf.getTextContent();
+                byte[] decoded = java.util.Base64.getDecoder().decode(pdf);
+                //definisati gde ce se fakture smestati! PDF je cca 65KB
+                  try (FileOutputStream fosPdf = new FileOutputStream("e:/efakture/eFakturePDF_"+brojdok+".pdf")) {
+                      fosPdf.write(decoded);
+                      fosPdf.flush();
+                       uspesnoSkidanje = "Uspesno ste skinuli pdf dokumenta "+brojdok;
+                              
+                  }
+            }
+
+        }
+
+         return uspesnoSkidanje;
+     
+     }
+     private static String getStatusSrb(String str) {
         String status = null;
        switch(str){
         case "Rejected":
