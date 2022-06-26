@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -40,7 +41,7 @@ import javax.xml.transform.stream.StreamResult;
  */
 public class HttpGetIzlazni {
 
-    private static String htmlIzlazni2;
+    private static String htmlIzlazniXML;
     private static String salesId;
     private static String komentarStatusa;
     private static Integer prikazStorno;
@@ -129,11 +130,12 @@ public class HttpGetIzlazni {
              HttpResponse httpResponseIzlazni2 = requestIzlazniXML.execute().returnResponse();
             
              if (httpResponseIzlazni2.getStatusLine().getStatusCode() != 200) {
+//             System.out.println("Faktura " + salesId + "nije kompletirana");
              }else{
-             htmlIzlazni2 = EntityUtils.toString(httpResponseIzlazni2.getEntity());
+             htmlIzlazniXML = EntityUtils.toString(httpResponseIzlazni2.getEntity());
              DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
              InputSource src = new InputSource();
-             src.setCharacterStream(new StringReader(htmlIzlazni2));
+             src.setCharacterStream(new StringReader(htmlIzlazniXML));
              
              Document doc = builder.parse(src);
            
@@ -152,15 +154,15 @@ public class HttpGetIzlazni {
                 Element elem = (Element) nNode;
 
                 Node nodelId = elem.getElementsByTagName("cbc:EndpointID").item(0);
-                String uid = nodelId.getTextContent();
+                String pib = nodelId.getTextContent();
 
                 Node node1 = elem.getElementsByTagName("cbc:Name").item(0);
-                String fname = node1.getTextContent();
+                String kupacIme = node1.getTextContent();
                 
                 
                 //ispisivanje
-                System.out.printf("Pib kupca : %s%n", uid);
-                System.out.printf("Kupac : %s%n", fname);
+                System.out.printf("Pib kupca : %s%n", pib);
+                System.out.printf("Kupac : %s%n", kupacIme);
                 
 
             }
@@ -169,21 +171,25 @@ public class HttpGetIzlazni {
              String iznos = doc.getElementsByTagName("cbc:PayableAmount").item(0).getTextContent();
              String brojdok = doc.getElementsByTagName("cbc:ID").item(0).getTextContent();
              String valuta  = doc.getElementsByTagName("cbc:DocumentCurrencyCode").item(0).getTextContent();
-             
+              UIManager.put("OptionPane.noButtonText", "Ne");
+              UIManager.put("OptionPane.okButtonText", "Ok");
+              UIManager.put("OptionPane.yesButtonText", "Da");
+              
+              //skidanje PDF fajla sa sefa
              inputPDF = JOptionPane.showConfirmDialog(null, 
-                "Da li želite da skinete PDF fajl fakture? "+brojdok, "PDF faktura",JOptionPane.YES_NO_OPTION);
-
+                "Da li želite da skinete PDF fajl fakture? "+brojdok, "PDF faktura preuzimanje",JOptionPane.YES_NO_OPTION);
             // 0=yes, 1=no, 2=cancel
             if(inputPDF == 0){
                 skiniPdf(doc,brojdok);
             }
+               //skidanje XML fajla sa sefa
              inputXML = JOptionPane.showConfirmDialog(null, 
-                "Da li želite da skinete XML fajl fakture? "+brojdok, "XML faktura",JOptionPane.YES_NO_OPTION);
-             //skidanje pdf-a sa sefa
+                "Da li želite da skinete XML fajl fakture? "+brojdok, "XML faktura preuzimanje",JOptionPane.YES_NO_OPTION);
+             // 0=yes, 1=no, 2=cancel
               if(inputXML == 0){
-                 skiniXML(htmlIzlazni2, brojdok);
+                 skiniXML(htmlIzlazniXML, brojdok);
             }
-             //skidanje XML fajla sa sefa
+          
            
 
              
@@ -245,8 +251,8 @@ public class HttpGetIzlazni {
                 String pdf = nodePdfElement.getTextContent();
                 byte[] decoded = java.util.Base64.getDecoder().decode(pdf);
                 //definisati gde ce se fakture smestati! PDF je cca 65KB
-                String dir = "e:/efakture/pdf/";
-                  try (FileOutputStream fosPdf = new FileOutputStream(dir + "eFakturePDF_"+brojdok+".pdf")) {
+                String dirPDF = "e:/efakture/pdf/";
+                  try (FileOutputStream fosPdf = new FileOutputStream(dirPDF + "eFakturePDF_"+brojdok+".pdf")) {
                       fosPdf.write(decoded);
                       fosPdf.flush();
                        uspesnoSkidanjePdf = "Uspesno ste skinuli PDF dokument na lokaciju e:/efakture/pdf/eFakturePDF_"+brojdok+".pdf";  
