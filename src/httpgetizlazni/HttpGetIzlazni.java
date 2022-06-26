@@ -41,7 +41,7 @@ import javax.xml.transform.stream.StreamResult;
  */
 public class HttpGetIzlazni {
 
-    private static String htmlIzlazniXML;
+    private static String izlazniXML;
     private static String salesId;
     private static String komentarStatusa;
     private static Integer prikazStorno;
@@ -127,15 +127,15 @@ public class HttpGetIzlazni {
              Request requestIzlazniXML = Request.Get(urlXML);
              requestIzlazniXML.setHeader("Accept", "*/*");
              requestIzlazniXML.setHeader("Apikey", apiKey);
-             HttpResponse httpResponseIzlazni2 = requestIzlazniXML.execute().returnResponse();
+             HttpResponse httpResponseIzlazniXML = requestIzlazniXML.execute().returnResponse();
             
-             if (httpResponseIzlazni2.getStatusLine().getStatusCode() != 200) {
+             if (httpResponseIzlazniXML.getStatusLine().getStatusCode() != 200) {
 //             System.out.println("Faktura " + salesId + "nije kompletirana");
              }else{
-             htmlIzlazniXML = EntityUtils.toString(httpResponseIzlazni2.getEntity());
+             izlazniXML = EntityUtils.toString(httpResponseIzlazniXML.getEntity());
              DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
              InputSource src = new InputSource();
-             src.setCharacterStream(new StringReader(htmlIzlazniXML));
+             src.setCharacterStream(new StringReader(izlazniXML));
              
              Document doc = builder.parse(src);
            
@@ -177,17 +177,17 @@ public class HttpGetIzlazni {
               
               //skidanje PDF fajla sa sefa
              inputPDF = JOptionPane.showConfirmDialog(null, 
-                "Da li želite da skinete PDF fajl fakture? "+brojdok, "PDF faktura preuzimanje",JOptionPane.YES_NO_OPTION);
+                "Da li želite da skinete PDF fajl fakture "+brojdok+ " ?", "PDF faktura preuzimanje",JOptionPane.YES_NO_OPTION);
             // 0=yes, 1=no, 2=cancel
             if(inputPDF == 0){
                 skiniPdf(doc,brojdok);
             }
                //skidanje XML fajla sa sefa
              inputXML = JOptionPane.showConfirmDialog(null, 
-                "Da li želite da skinete XML fajl fakture? "+brojdok, "XML faktura preuzimanje",JOptionPane.YES_NO_OPTION);
+                "Da li želite da skinete XML fajl fakture "+brojdok+ " ?", "XML faktura preuzimanje",JOptionPane.YES_NO_OPTION);
              // 0=yes, 1=no, 2=cancel
               if(inputXML == 0){
-                 skiniXML(htmlIzlazniXML, brojdok);
+                 skiniXML(izlazniXML, brojdok);
             }
           
            
