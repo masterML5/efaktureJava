@@ -27,6 +27,9 @@ import org.xml.sax.InputSource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.xml.transform.Transformer;
@@ -35,6 +38,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.joda.time.DateTimeUtils;
 
  /*
  * @author Milos Jelic
@@ -49,6 +53,8 @@ public class HttpGetIzlazni {
     private static String statusDokumenta;
     private static String uspesnoSkidanjePdf;
     private static String uspesnoSkidanjeXML;
+    private static String promenaStatusaDatum;
+    private static String promenaStatusaDatumVreme;
     private static int inputPDF;
     private static int inputXML;
     private static final String apiUrlSviIzlazniIds = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ids";
@@ -106,6 +112,12 @@ public class HttpGetIzlazni {
   
              JSONObject obj2 = new JSONObject(htmlIzlazni);  
              statusDokumenta = obj2.getString("Status"); 
+             //datum se dobija u UTC formatu pa brisemo nepotrebne delove
+             String promenaStatusaDatumUTC = obj2.getString("LastModifiedUtc");
+             String[] splitted = promenaStatusaDatumUTC.split("T");
+             promenaStatusaDatum = splitted[0];
+             promenaStatusaDatumVreme =  splitted[1].substring(0, 8);
+            
              if("Cancelled".equals(statusDokumenta)){
               prikazStorno = 1;
               stornoKomentar = obj2.getString("StornoComment");
@@ -161,8 +173,9 @@ public class HttpGetIzlazni {
                 
                 
                 //ispisivanje
-                System.out.printf("Pib kupca : %s%n", pib);
-                System.out.printf("Kupac : %s%n", kupacIme);
+                System.out.println("Pib kupca : " + pib);
+                System.out.println("Kupac : " + kupacIme);
+                System.out.println("Datum promene statusa : " + promenaStatusaDatum + " Vreme : " + promenaStatusaDatumVreme);
                 
 
             }
@@ -171,9 +184,9 @@ public class HttpGetIzlazni {
              String iznos = doc.getElementsByTagName("cbc:PayableAmount").item(0).getTextContent();
              String brojdok = doc.getElementsByTagName("cbc:ID").item(0).getTextContent();
              String valuta  = doc.getElementsByTagName("cbc:DocumentCurrencyCode").item(0).getTextContent();
-              UIManager.put("OptionPane.noButtonText", "Ne");
-              UIManager.put("OptionPane.okButtonText", "Ok");
-              UIManager.put("OptionPane.yesButtonText", "Da");
+             UIManager.put("OptionPane.noButtonText", "Ne");
+             UIManager.put("OptionPane.okButtonText", "Ok");
+             UIManager.put("OptionPane.yesButtonText", "Da");
               
               //skidanje PDF fajla sa sefa
              inputPDF = JOptionPane.showConfirmDialog(null, 
