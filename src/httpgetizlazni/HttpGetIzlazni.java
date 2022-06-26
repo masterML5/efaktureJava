@@ -32,6 +32,10 @@ public class HttpGetIzlazni {
 
     private static String htmlIzlazni2;
     private static String salesId;
+    private static String komentarStatusa;
+    private static Integer prikazStorno;
+    private static String stornoKomentar;
+    private static String statusDokumenta;
     private static final String apiUrlSviIzlazniIds = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ids";
     private static final String apiUrlSviIzlazni = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice?invoiceId=";
     private static final String apiUrlIzlazniXMLUBL = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/xml?invoiceId=";
@@ -44,11 +48,11 @@ public class HttpGetIzlazni {
      
     public static void main(String[] args) throws IOException, JSONException, ParserConfigurationException, SAXException {
         // Preuzimanje svih Izlaznih ID-a
-        Request request = Request.Post(apiUrlSviIzlazniIds);
-        request.setHeader("Accept", "text/plain");
-        request.setHeader("Apikey", apiKey);
+        Request requestSviIds = Request.Post(apiUrlSviIzlazniIds);
+        requestSviIds.setHeader("Accept", "text/plain");
+        requestSviIds.setHeader("Apikey", apiKey);
        
-        HttpResponse httpResponse = request.execute().returnResponse();
+        HttpResponse httpResponse = requestSviIds.execute().returnResponse();
     
         if (httpResponse.getEntity() != null) {
 	String html = EntityUtils.toString(httpResponse.getEntity());
@@ -77,23 +81,38 @@ public class HttpGetIzlazni {
             //Svi izlazni dokumenti po ID-u (salesId)
              salesId = listdata.get(i).toString();
              String url =  apiUrlSviIzlazni + salesId;
-             Request requestIzlazni = Request.Get(url);
-             requestIzlazni.setHeader("Accept", "*/*");
-             requestIzlazni.setHeader("Apikey", apiKey);
-             HttpResponse httpResponseIzlazni = requestIzlazni.execute().returnResponse();
+             Request requestIzlazniPoId = Request.Get(url);
+             requestIzlazniPoId.setHeader("Accept", "*/*");
+             requestIzlazniPoId.setHeader("Apikey", apiKey);
+             HttpResponse httpResponseIzlazni = requestIzlazniPoId.execute().returnResponse();
 
              if (httpResponseIzlazni.getEntity() != null) {
              String htmlIzlazni = EntityUtils.toString(httpResponseIzlazni.getEntity());
   
              JSONObject obj2 = new JSONObject(htmlIzlazni);  
-             String statusDokumenta = obj2.getString("Status");    
+             statusDokumenta = obj2.getString("Status"); 
+             if("Cancelled".equals(statusDokumenta)){
+              prikazStorno = 1;
+              stornoKomentar = obj2.getString("StornoComment");
+                 
+             }else{
+              prikazStorno = 0;
+             }
+            
+             //provera da li postoji komentar
+             if(obj2.isNull("Comment")){
+              komentarStatusa = "Nema komentara";
+             }else{
+              komentarStatusa = obj2.getString("Comment");
+             }
+             
              
              //Preuzimanje razlicitih polja iz XML fajla izlaznog dokumenta
              String urlXML = apiUrlIzlazniXMLUBL + salesId;
-             Request requestIzlazni2 = Request.Get(urlXML);
-             requestIzlazni2.setHeader("Accept", "*/*");
-             requestIzlazni2.setHeader("Apikey", apiKey);
-             HttpResponse httpResponseIzlazni2 = requestIzlazni2.execute().returnResponse();
+             Request requestIzlazniXML = Request.Get(urlXML);
+             requestIzlazniXML.setHeader("Accept", "*/*");
+             requestIzlazniXML.setHeader("Apikey", apiKey);
+             HttpResponse httpResponseIzlazni2 = requestIzlazniXML.execute().returnResponse();
             
              if (httpResponseIzlazni2.getStatusLine().getStatusCode() != 200) {
              }else{
@@ -107,7 +126,7 @@ public class HttpGetIzlazni {
              NodeList nList = doc.getElementsByTagName("cac:AccountingCustomerParty");
              for (int j = 0; j < nList.getLength(); j++) {
 
-            Node nNode = nList.item(j);
+              Node nNode = nList.item(j);
 
 
             if (nNode.getNodeType() == Node.ELEMENT_NODE) {
@@ -119,7 +138,7 @@ public class HttpGetIzlazni {
 
                 Node node1 = elem.getElementsByTagName("cbc:Name").item(0);
                 String fname = node1.getTextContent();
-
+                //ispisivanje
                 System.out.printf("Pib kupca : %s%n", uid);
                 System.out.printf("Kupac : %s%n", fname);
 
@@ -132,10 +151,15 @@ public class HttpGetIzlazni {
              String brojdok = doc.getElementsByTagName("cbc:ID").item(0).getTextContent();
              String valuta  = doc.getElementsByTagName("cbc:DocumentCurrencyCode").item(0).getTextContent();
              
-
+              //ispisivanje
+             
              System.out.println("Iznos : " + iznos + " " + valuta);
              System.out.println("Broj dokumenta : " + brojdok);
              System.out.println("Status : " + getStatusSrb(statusDokumenta));
+             if(prikazStorno == 1){
+             System.out.println("Storno komentar :" + stornoKomentar);  
+             }
+             System.out.println("Komentar statusa : " + komentarStatusa);
              System.out.println("InvoiceID : " + salesId);
              System.out.println("=========================================================");
          
@@ -177,5 +201,6 @@ public class HttpGetIzlazni {
     }
     return status;
     }
+ 
    
 }
