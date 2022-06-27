@@ -27,9 +27,6 @@ import org.xml.sax.InputSource;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.xml.transform.Transformer;
@@ -38,7 +35,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.joda.time.DateTimeUtils;
 
  /*
  * @author Milos Jelic
@@ -57,8 +53,8 @@ public class HttpGetIzlazni {
     private static String uspesnoSkidanjeXML;
     private static String promenaStatusaDatum;
     private static String promenaStatusaDatumVreme;
-    private static int inputPDF;
-    private static int inputXML;
+    private static Integer inputPDF;
+    private static Integer inputXML;
     private static final String apiUrlSviIzlazniIds = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ids";
     private static final String apiUrlSviIzlazni = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice?invoiceId=";
     private static final String apiUrlIzlazniXMLUBL = "https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/xml?invoiceId=";
@@ -71,6 +67,7 @@ public class HttpGetIzlazni {
      
     public static void main(String[] args) throws IOException, JSONException, ParserConfigurationException, SAXException, TransformerException {
         // Preuzimanje svih Izlaznih ID-a
+      
         Request requestSviIds = Request.Post(apiUrlSviIzlazniIds);
         requestSviIds.setHeader("Accept", "text/plain");
         requestSviIds.setHeader("Apikey", apiKey);
@@ -174,8 +171,7 @@ public class HttpGetIzlazni {
                  kupacIme = node1.getTextContent();
                 
                 
-                //ispisivanje
-        
+             
                 
 
             }
@@ -191,7 +187,7 @@ public class HttpGetIzlazni {
 
            
 
-             
+       
               //ispisivanje
              System.out.println("Pib kupca : " + pib);
              System.out.println("Kupac : " + kupacIme);   
