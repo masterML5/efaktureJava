@@ -111,7 +111,7 @@ public class HttpGetIzlazni {
   
              JSONObject obj2 = new JSONObject(htmlIzlazni);  
              statusDokumenta = obj2.getString("Status"); 
-             //datum se dobija u UTC formatu pa brisemo nepotrebne delove
+             //datum se dobija u W3C formatu pa brisemo nepotrebne delove
              String promenaStatusaDatumUTC = obj2.getString("LastModifiedUtc");
              String[] splitted = promenaStatusaDatumUTC.split("T");
              promenaStatusaDatum = splitted[0];
